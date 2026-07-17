@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     COPIA PER GLI STUDENTI di index.html
+     Identica all'originale ma SENZA la parte Info (pulsante
+     nell'header, link nel footer e finestra con contatti/social).
+     ⚠️ Ricorda: ogni modifica fatta a index.html va riportata
+     anche qui (tranne, appunto, le parti Info).
+     ============================================================ -->
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consiglialibro 📖 — Il tuo prossimo libro ti aspetta</title>
+  <meta name="description" content="Consiglialibro: rispondi a sei domande e trova il libro giusto per te, scelto e approvato dal prof Campedelli.">
+
+  <!-- Google Fonts: Caveat (titoli a mano) + Kalam (scrittura a mano leggibile) + Roboto (corpo lungo leggibile) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===================== BARRA SUPERIORE ===================== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-testi">
+        <p class="logo"><span class="logo-emoji" aria-hidden="true">📖</span> Consiglialibro</p>
+        <!-- I testi qui sotto vengono riempiti da app.js: modificali lì, in cima al file -->
+        <p class="sottotitolo" id="sottotitolo"></p>
+        <p class="nota-catalogo" id="nota-catalogo">
+          <span class="pallino" aria-hidden="true"></span>
+          <span id="nota-testo"></span>
+          <span class="conta-libri" id="conta-libri"></span>
+        </p>
+      </div>
+      <div class="header-azioni">
+        <button type="button" id="btn-catalogo" class="btn-info" aria-haspopup="dialog">
+          <span aria-hidden="true">📚</span> Catalogo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== AREA CHAT ===================== -->
+  <main class="main">
+    <h1 class="visually-hidden">Consiglialibro: trova il libro giusto per te</h1>
+    <section id="chat" class="chat" aria-live="polite" aria-label="Conversazione con Consiglialibro"></section>
+  </main>
+
+  <footer class="footer">
+    <p>© profcampedelli - Vuoi suggerirmi un libro da aggiungere al catalogo? Dimmelo a scuola!</p>
+  </footer>
+
+  <!-- ===================== MODALE CATALOGO ===================== -->
+  <div class="modale" id="modale-catalogo" role="dialog" aria-modal="true" aria-labelledby="titolo-catalogo" hidden>
+    <div class="modale-contenuto modale-contenuto-catalogo">
+      <button type="button" class="modale-chiudi" aria-label="Chiudi il catalogo">✕</button>
+      <h2 id="titolo-catalogo" class="modale-titolo">📚 Tutto il catalogo</h2>
+      <div id="catalogo-contenitore"></div>
+    </div>
+  </div>
+
+  <!-- ===================== MODALE SCHEDA LIBRO (per il catalogo) ===================== -->
+  <div class="modale" id="modale-scheda" role="dialog" aria-modal="true" aria-label="Scheda del libro" hidden>
+    <div class="modale-contenuto modale-contenuto-scheda">
+      <button type="button" class="modale-chiudi" aria-label="Chiudi la scheda">✕</button>
+      <div id="scheda-contenitore"></div>
+    </div>
+  </div>
+
+  <script src="catalogo.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
