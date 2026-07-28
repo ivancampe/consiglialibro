@@ -1,0 +1,18 @@
+In questa cartella vanno le immagini delle copertine.
+
+- Formato: JPG (va bene anche PNG o WebP)
+- Proporzioni verticali 2:3, circa 400x600 pixel
+- Nome file semplice, senza spazi ne' accenti (es. wonder.jpg)
+- Il nome deve corrispondere al campo "copertina" del libro in catalogo.js
+
+Finche' un'immagine manca, il sito mostra da solo un segnaposto colorato
+con titolo e autore: nessun errore.
+
+Quali nomi servono?
+Non c'e' una lista da tenere aggiornata qui: i nomi giusti sono
+quelli scritti nel campo "copertina" dei libri dentro catalogo.js.
+Quello e' l'unico elenco che conta. (Prima qui c'era una lista
+copiata a mano, che col tempo era rimasta indietro rispetto al
+catalogo: meglio non averne due.)
+
+(Questo file puo' essere cancellato: serve solo come promemoria.)
