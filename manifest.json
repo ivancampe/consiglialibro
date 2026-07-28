@@ -1,0 +1,18 @@
+{
+  "name": "Consiglialibro",
+  "short_name": "Consiglialibro",
+  "description": "Rispondi a sei domande e trova il libro giusto per te, scelto e approvato dal prof Campedelli.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f3e7",
+  "theme_color": "#efe8d4",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

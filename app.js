@@ -148,6 +148,9 @@ const ETICHETTE_DIFFICOLTA = { facile: "Facile", media: "Media", impegnativa: "I
 
 const TOTALE_DOMANDE = 6;
 
+// Numero della domanda in corso (progressivo, si azzera a ogni giro)
+let contaDomande = 0;
+
 // Stato delle scelte dell'utente
 let scelte = { classe: null, genere: null, effetto: null, formato: null, lunghezza: null, livello: null };
 
@@ -170,6 +173,15 @@ const generePrincipale = libro => generiDi(libro)[0];
 const emojiFormato = formato => EMOJI_FORMATI[formato] || EMOJI_FORMATO_GENERICA;
 
 const maiuscola = testo => testo.charAt(0).toUpperCase() + testo.slice(1);
+
+// Rende sicuro un testo del catalogo prima di infilarlo dentro
+// dell'HTML. Senza, un titolo o una nota che contiene & oppure <
+// rompe la pagina in silenzio: capita anche con etichette normali
+// come "manga & fumetto" o "fiaba & favola".
+const proteggi = t => String(t)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;");
 
 // Generi presenti in un insieme di libri, senza doppioni,
 // nell'ordine della tabella STILE_GENERI (i generi nuovi in coda,
@@ -246,6 +258,25 @@ function congiungi(parti) {
 // Effetto "scrittura a mano": rivela il testo carattere per carattere
 // conservando i tag interni (strong, em, span…). Se l'utente preferisce
 // meno movimento, il testo compare subito.
+// Quante scritture sono in corso in questo momento, e che cosa
+// aspetta il loro termine (i pulsanti di risposta, il messaggio
+// successivo…). Serve perché il quaderno si scriva UNA riga alla
+// volta invece di due o tre insieme.
+let scrittureAttive = 0;
+const inAttesaDiScrittura = [];
+
+function dopoLaScrittura(azione, ritardo) {
+  const esegui = () => setTimeout(azione, ritardo === undefined ? RITARDO_MESSAGGIO : ritardo);
+  if (scrittureAttive === 0) esegui();
+  else inAttesaDiScrittura.push(esegui);
+}
+
+function scritturaFinita() {
+  scrittureAttive = Math.max(0, scrittureAttive - 1);
+  if (scrittureAttive > 0) return;
+  inAttesaDiScrittura.splice(0).forEach(azione => azione());
+}
+
 function scriviAMano(nodo) {
   if (preferisceMenoMovimento()) return;
   const nodiTesto = [];
@@ -259,9 +290,14 @@ function scriviAMano(nodo) {
   const caratteri = nodiTesto.map(n => [...n.nodeValue]);
   nodiTesto.forEach(n => { n.nodeValue = ""; });
   nodo.classList.add("scrivendo");
+  scrittureAttive += 1;
   let i = 0, j = 0;
   const passo = () => {
-    if (i >= nodiTesto.length) { nodo.classList.remove("scrivendo"); return; }
+    if (i >= nodiTesto.length) {
+      nodo.classList.remove("scrivendo");
+      scritturaFinita();
+      return;
+    }
     if (j < caratteri[i].length) {
       const c = caratteri[i][j];
       j += 1;
@@ -281,18 +317,44 @@ function scriviAMano(nodo) {
 // il suo bordo superiore sulla riga successiva, così il testo scritto
 // a mano cade SEMPRE sopra una riga stampata, anche quando prima ci
 // sono post-it o pulsanti di altezza irregolare.
-const PASSO_RIGA = 32; // px — deve combaciare con --u (2rem)
+// Il passo delle righe NON è una costante scritta a mano: viene
+// letto da --u in style.css. Così se lo studente ha il carattere
+// di sistema ingrandito (o zooma la pagina), le righe azzurre e
+// il testo restano allineati invece di scollarsi.
+function passoRiga() {
+  const radice = document.documentElement;
+  const valore = getComputedStyle(radice).getPropertyValue("--u").trim();
+  const numero = parseFloat(valore);
+  if (!numero) return 32;                       // ripiego prudente
+  if (valore.endsWith("px")) return numero;
+  const base = parseFloat(getComputedStyle(radice).fontSize) || 16;
+  return numero * base;                         // rem / em
+}
+
 function allineaRiga(nodo) {
   const main = document.querySelector(".main");
   if (!main) return;
+  const passo = passoRiga();
   const origine = main.getBoundingClientRect().top + parseFloat(getComputedStyle(main).paddingTop);
   const rel = nodo.getBoundingClientRect().top - origine;
-  const resto = ((rel % PASSO_RIGA) + PASSO_RIGA) % PASSO_RIGA;
-  const correzione = (PASSO_RIGA - resto) % PASSO_RIGA;
+  const resto = ((rel % passo) + passo) % passo;
+  const correzione = (passo - resto) % passo;
   if (correzione > 0.5) {
     const attuale = parseFloat(getComputedStyle(nodo).marginTop) || 0;
     nodo.style.marginTop = (attuale + correzione) + "px";
   }
+}
+
+// Annuncio per chi usa uno screen reader. Sta in una zona
+// dedicata e invisibile: il messaggio viene letto UNA volta,
+// già completo. Se invece lasciassimo l'aria-live sulla chat,
+// l'effetto "macchina da scrivere" farebbe rileggere la frase
+// da capo a ogni singolo carattere.
+function annuncia(testo) {
+  const zona = document.getElementById("annunci");
+  if (!zona || !testo) return;
+  zona.textContent = "";
+  setTimeout(() => { zona.textContent = testo; }, 50);
 }
 
 function messaggioBot(html) {
@@ -300,13 +362,18 @@ function messaggioBot(html) {
   chat.appendChild(m);
   allineaRiga(m);
   scorriInFondo();
+  annuncia(m.textContent);   // PRIMA di scriviAMano, che svuota il testo
   scriviAMano(m);
   return m;
 }
 
-// Domanda con indicatore di avanzamento ("Domanda 2 di 6")
-function messaggioDomanda(numero, html) {
-  return messaggioBot(`<span class="passo">Domanda ${numero} di ${TOTALE_DOMANDE}</span>${html}`);
+// Domanda con indicatore di avanzamento ("Domanda 2 di 6").
+// Il numero è PROGRESSIVO, non scritto a mano: così non restano
+// "buchi" nel conteggio quando una domanda viene risposta
+// d'ufficio dal bot (vedi domandaGenere).
+function messaggioDomanda(html) {
+  contaDomande += 1;
+  return messaggioBot(`<span class="passo">Domanda ${contaDomande} di ${TOTALE_DOMANDE}</span>${html}`);
 }
 
 function messaggioUtente(testo) {
@@ -326,8 +393,8 @@ function gruppoOpzioni(opzioni) {
     btn.type = "button";
     btn.innerHTML =
       `<span class="opzione-emoji" aria-hidden="true">${opz.emoji || ""}</span>` +
-      `<span class="opzione-testo">${opz.label}` +
-      (opz.dettaglio ? `<small>${opz.dettaglio}</small>` : "") +
+      `<span class="opzione-testo">${proteggi(opz.label)}` +
+      (opz.dettaglio ? `<small>${proteggi(opz.dettaglio)}</small>` : "") +
       `</span>`;
     btn.addEventListener("click", () => {
       gruppo.remove();
@@ -336,8 +403,12 @@ function gruppoOpzioni(opzioni) {
     });
     gruppo.appendChild(btn);
   });
-  chat.appendChild(gruppo);
-  scorriInFondo();
+  // I pulsanti compaiono solo quando la domanda ha finito di
+  // scriversi: prima si potevano cliccare a metà frase.
+  dopoLaScrittura(() => {
+    chat.appendChild(gruppo);
+    scorriInFondo();
+  }, 150);
 }
 
 // ---------- Flusso della conversazione ----------
@@ -345,17 +416,44 @@ function avvia() {
   scelte = { classe: null, genere: null, effetto: null, formato: null, lunghezza: null, livello: null };
   classifica = [];
   prossimoInClassifica = 0;
+  contaDomande = 0;
+  // Pagina nuova del quaderno: il giro precedente sparisce, così
+  // "Ricomincia" non accoda una conversazione sotto l'altra.
+  chat.innerHTML = "";
   messaggioBot("Ciao! 👋 Sono <strong>Consiglialibro</strong>. Rispondi a sei domande veloci e ti trovo il libro giusto per te.");
-  setTimeout(domandaClasse, RITARDO_MESSAGGIO);
+  dopoLaScrittura(domandaClasse);
 }
+
+/* ------------------------------------------------------------
+   ORDINE DELLE DOMANDE
+   I due filtri RIGIDI (classe e livello di lettura) vengono
+   chiesti per primi. In questo modo le domande successive
+   possono mostrare SOLO le opzioni che portano davvero a un
+   libro: nessun pulsante che finisce in un vicolo cieco.
+   Poi vengono le domande che pesano sul punteggio, dalla più
+   forte (genere) alla più leggera (lunghezza).
+   ------------------------------------------------------------ */
 
 // 1 · Classe (filtro rigido)
 function domandaClasse() {
-  messaggioDomanda(1, "<strong>Che classe fai?</strong>");
+  messaggioDomanda("<strong>Che classe fai?</strong>");
   gruppoOpzioni(CLASSI.map(c => ({
     emoji: c.emoji,
     label: c.label,
-    azione: () => { scelte.classe = c.id; domandaFormato(); }
+    azione: () => { scelte.classe = c.id; domandaLivello(); }
+  })));
+}
+
+// 2 · Esperienza di lettura (filtro rigido)
+// Chiesta subito dopo la classe: insieme decidono quali libri
+// esistono davvero, e quindi quali opzioni ha senso mostrare.
+function domandaLivello() {
+  messaggioDomanda("<strong>Come te la cavi con la lettura?</strong>");
+  gruppoOpzioni(LIVELLI.map(l => ({
+    emoji: l.emoji,
+    label: l.label,
+    dettaglio: l.dettaglio,
+    azione: () => { scelte.livello = l.id; domandaFormato(); }
   })));
 }
 
@@ -366,89 +464,90 @@ function libriDellaClasse() {
     : CATALOGO.filter(l => l.classi.includes(scelte.classe));
 }
 
-// I libri della classe scelta che rispettano anche il formato
-// (se scelto): è l'insieme da cui nasce la domanda sul genere.
-function libriClasseFormato() {
-  return libriDellaClasse().filter(l =>
+// I libri che superano i due filtri rigidi già noti dopo la
+// domanda 2 (classe + livello di lettura). È la base da cui
+// nascono le domande 3 e 4.
+function libriBase() {
+  const ammesse = difficoltaAmmesse();
+  return libriDellaClasse().filter(l => ammesse.includes(l.difficolta));
+}
+
+// I libri della base che rispettano anche il formato (se scelto):
+// è l'insieme da cui nasce la domanda sul genere.
+function libriBaseFormato() {
+  return libriBase().filter(l =>
     scelte.formato === null || l.formato === scelte.formato);
 }
 
-// 2 · Formato preferito (dinamico; se scelto è un filtro rigido
-// e restringe i generi mostrati alla domanda 4)
+// 3 · Formato preferito (filtro rigido, se scelto).
+// Mostra solo i formati che esistono per la classe E il livello
+// scelti: se in 1ª non c'è nessun saggio, il pulsante non compare.
 function domandaFormato() {
-  messaggioDomanda(2, "<strong>Che tipo di libro preferisci?</strong>");
-  const formati = formatiPresenti(libriDellaClasse());
+  messaggioDomanda("<strong>Che tipo di libro preferisci?</strong>");
+  const formati = formatiPresenti(libriBase());
   const opzioni = formati.map(f => ({
     emoji: emojiFormato(f),
     label: maiuscola(f),
-    azione: () => { scelte.formato = f; domandaEffetto(); }
+    azione: () => { scelte.formato = f; domandaGenere(); }
   }));
   opzioni.push({
     emoji: "🤷",
     label: "Non importa",
-    azione: () => { scelte.formato = null; domandaEffetto(); }
+    azione: () => { scelte.formato = null; domandaGenere(); }
   });
   gruppoOpzioni(opzioni);
 }
 
-// 3 · Effetto cercato (punteggio forte, non filtro)
-function domandaEffetto() {
-  messaggioDomanda(3, "<strong>Che effetto vuoi che ti faccia questo libro?</strong>");
-  gruppoOpzioni(EFFETTI.map(e => ({
-    emoji: e.emoji,
-    label: e.label,
-    azione: () => { scelte.effetto = e.id; domandaGenere(); }
-  })));
-}
-
-// 4 · Genere: solo i generi presenti tra i libri della classe
-// E del formato scelti. Se ne resta uno solo (o nessuno), la
-// domanda viene saltata con una nota simpatica.
+// 4 · Genere: solo i generi presenti tra i libri rimasti.
+// Se ne resta uno solo, la domanda non sparisce: il bot la
+// "risponde d'ufficio" e conta lo stesso nel totale, così il
+// contatore non salta mai un numero.
 function domandaGenere() {
-  const generi = generiPresenti(libriClasseFormato());
+  const generi = generiPresenti(libriBaseFormato());
 
   if (generi.length <= 1) {
     scelte.genere = generi[0] || null;
     if (generi.length === 1) {
-      messaggioBot(`Con questo tipo di libro il genere è già scritto: ${emojiGenere(generi[0])} <strong>${maiuscola(generi[0])}</strong>!`);
+      messaggioDomanda(`<strong>Che tipo di storia ti va?</strong><br>` +
+        `Con questo tipo di libro il genere è già scritto: ` +
+        `${emojiGenere(generi[0])} <strong>${proteggi(maiuscola(generi[0]))}</strong>!`);
     }
-    setTimeout(domandaLunghezza, RITARDO_MESSAGGIO * 2);
+    dopoLaScrittura(domandaEffetto, RITARDO_MESSAGGIO * 2);
     return;
   }
 
-  messaggioDomanda(4, "<strong>Che tipo di storia ti va?</strong>");
+  messaggioDomanda("<strong>Che tipo di storia ti va?</strong>");
   const opzioni = generi.map(g => ({
     emoji: emojiGenere(g),
     label: maiuscola(g),
-    azione: () => { scelte.genere = g; domandaLunghezza(); }
+    azione: () => { scelte.genere = g; domandaEffetto(); }
   }));
   opzioni.push({
     emoji: "🤷",
     label: "Qualsiasi",
-    azione: () => { scelte.genere = null; domandaLunghezza(); }
+    azione: () => { scelte.genere = null; domandaEffetto(); }
   });
   gruppoOpzioni(opzioni);
 }
 
-// 5 · Lunghezza
+// 5 · Effetto cercato (punteggio, non filtro)
+function domandaEffetto() {
+  messaggioDomanda("<strong>Che effetto vuoi che ti faccia questo libro?</strong>");
+  gruppoOpzioni(EFFETTI.map(e => ({
+    emoji: e.emoji,
+    label: e.label,
+    azione: () => { scelte.effetto = e.id; domandaLunghezza(); }
+  })));
+}
+
+// 6 · Lunghezza (punteggio: il segnale più leggero, quindi ultimo)
 function domandaLunghezza() {
-  messaggioDomanda(5, "<strong>Quanto vuoi che duri il viaggio?</strong>");
+  messaggioDomanda("<strong>Quanto vuoi che duri il viaggio?</strong>");
   gruppoOpzioni(LUNGHEZZE.map(l => ({
     emoji: l.emoji,
     label: l.label,
     dettaglio: l.dettaglio,
-    azione: () => { scelte.lunghezza = l.id; domandaLivello(); }
-  })));
-}
-
-// 6 · Esperienza di lettura (filtro rigido)
-function domandaLivello() {
-  messaggioDomanda(6, "<strong>Come te la cavi con la lettura?</strong>");
-  gruppoOpzioni(LIVELLI.map(l => ({
-    emoji: l.emoji,
-    label: l.label,
-    dettaglio: l.dettaglio,
-    azione: () => { scelte.livello = l.id; mostraRisultati(); }
+    azione: () => { scelte.lunghezza = l.id; mostraRisultati(); }
   })));
 }
 
@@ -459,25 +558,29 @@ function difficoltaAmmesse() {
   return livello ? livello.ammesse : ["facile", "media", "impegnativa"];
 }
 
-// Filtri RIGIDI: classe, formato (se scelto) e difficoltà.
+// Filtri RIGIDI: classe, livello di lettura e formato (se scelto).
 // Genere, effetto e lunghezza pesano invece sul punteggio.
+// È lo stesso insieme su cui è nata la domanda 4.
 function libriAmmessi() {
-  const ammesse = difficoltaAmmesse();
-  return libriDellaClasse().filter(libro =>
-    (scelte.formato === null || libro.formato === scelte.formato) &&
-    ammesse.includes(libro.difficolta)
-  );
+  return libriBaseFormato();
 }
 
+/* I PESI DEL PUNTEGGIO
+   Sono tarati perché il GENERE resti il segnale più forte in
+   assoluto: 50 batte qualunque combinazione degli altri
+   (effetto 30 + lunghezza 10 + bonus parole, al massimo 6 nel
+   catalogo attuale = 46). Se alzi la lunghezza sopra 13, un
+   libro del genere sbagliato può tornare a scavalcarne uno
+   del genere giusto. */
 function punteggio(libro) {
   let punti = 0;
-  // genere: peso alto
-  if (scelte.genere && generiDi(libro).includes(scelte.genere)) punti += 40;
+  // genere: il peso più alto, deve prevalere su tutto il resto
+  if (scelte.genere && generiDi(libro).includes(scelte.genere)) punti += 50;
   // effetto: peso alto
   if (scelte.effetto && libro.effetto.includes(scelte.effetto)) punti += 30;
-  // lunghezza: peso medio ("non importa" non dà punti a nessuno)
+  // lunghezza: peso leggero ("non importa" non dà punti a nessuno)
   const lunghezza = LUNGHEZZE.find(l => l.id === scelte.lunghezza);
-  if (lunghezza && scelte.lunghezza !== "qualsiasi" && lunghezza.test(libro.pagine)) punti += 15;
+  if (lunghezza && scelte.lunghezza !== "qualsiasi" && lunghezza.test(libro.pagine)) punti += 10;
   // piccolo bonus per parole chiave affini all'effetto cercato
   const affini = PAROLE_EFFETTO[scelte.effetto] || [];
   libro.paroleChiave.forEach(parola => {
@@ -499,20 +602,20 @@ function mescola(array) {
 function fraseMotivazione(libro) {
   const parti = [];
   if (scelte.genere && generiDi(libro).includes(scelte.genere)) {
-    parti.push(`cercavi <strong>${scelte.genere}</strong> ${emojiGenere(scelte.genere)}`);
+    parti.push(`cercavi <strong>${proteggi(scelte.genere)}</strong> ${emojiGenere(scelte.genere)}`);
   }
   if (scelte.effetto && libro.effetto.includes(scelte.effetto)) {
     parti.push(FRASI_EFFETTO[scelte.effetto]);
   }
   if (scelte.formato && libro.formato === scelte.formato) {
-    parti.push(`è proprio il tipo di libro che preferisci: ${emojiFormato(libro.formato)} ${libro.formato}`);
+    parti.push(`è proprio il tipo di libro che preferisci: ${emojiFormato(libro.formato)} ${proteggi(libro.formato)}`);
   }
   const lunghezza = LUNGHEZZE.find(l => l.id === scelte.lunghezza);
   if (lunghezza && scelte.lunghezza !== "qualsiasi" && lunghezza.test(libro.pagine)) {
     parti.push(FRASI_LUNGHEZZA[scelte.lunghezza]);
   }
   if (scelte.livello) parti.push(FRASI_LIVELLO[scelte.livello]);
-  if (parti.length === 0) return `Te lo consiglio perché <em>${libro.titolo}</em> merita, punto.`;
+  if (parti.length === 0) return `Te lo consiglio perché <em>${proteggi(libro.titolo)}</em> merita, punto.`;
   // al massimo tre motivi, per non fare la predica
   return "Te lo consiglio perché " + congiungi(parti.slice(0, 3)) + ".";
 }
@@ -526,14 +629,25 @@ function creaCopertina(libro, piccola) {
 
   const segnaposto = el("div", "copertina-segnaposto",
     `<span class="segnaposto-emoji" aria-hidden="true">${emojiGenere(generePrincipale(libro))}</span>
-     <span class="segnaposto-titolo">${libro.titolo}</span>
-     <span class="segnaposto-autore">${libro.autore}</span>`);
+     <span class="segnaposto-titolo">${proteggi(libro.titolo)}</span>
+     <span class="segnaposto-autore">${proteggi(libro.autore)}</span>`);
   box.appendChild(segnaposto);
 
   // L'immagine resta invisibile finché non è caricata davvero:
   // se manca o non si carica, rimane il segnaposto (mai icone rotte).
   const img = document.createElement("img");
   img.alt = `Copertina di ${libro.titolo}`;
+  // Caricamento pigro: le copertine del catalogo si scaricano solo
+  // quando stanno per entrare nello schermo. Senza, aprendo il
+  // catalogo il telefono scaricherebbe TUTTE le copertine in un
+  // colpo solo (oltre un mega e mezzo) anche solo per guardarne una.
+  // (Il posto della copertina è già riservato dal riquadro qui sopra,
+  // quindi la pagina non "salta" quando l'immagine arriva.)
+  // ⚠️ Queste due righe devono restare PRIMA di img.src: se il
+  // browser conosce già l'indirizzo, il caricamento parte subito e
+  // il "lazy" non serve più a niente.
+  img.setAttribute("loading", "lazy");
+  img.setAttribute("decoding", "async");
   img.addEventListener("load", () => img.classList.add("caricata"));
   img.addEventListener("error", () => img.remove());
   img.src = "copertine/" + libro.copertina;
@@ -553,17 +667,17 @@ function creaScheda(libro, motivazione) {
 
   const info = el("div", "scheda-info");
   info.appendChild(el("p", "scheda-genere",
-    `${generiDi(libro).map(g => `${emojiGenere(g)} ${maiuscola(g)}`).join(" · ")} · ${emojiFormato(libro.formato)} ${libro.formato}`));
-  info.appendChild(el("h2", "scheda-titolo", libro.titolo));
-  info.appendChild(el("p", "scheda-autore", `di ${libro.autore} · ${libro.pagine} pagine`));
-  info.appendChild(el("p", "scheda-trama", libro.trama));
+    `${generiDi(libro).map(g => `${emojiGenere(g)} ${proteggi(maiuscola(g))}`).join(" · ")} · ${emojiFormato(libro.formato)} ${proteggi(libro.formato)}`));
+  info.appendChild(el("h2", "scheda-titolo", proteggi(libro.titolo)));
+  info.appendChild(el("p", "scheda-autore", `di ${proteggi(libro.autore)} · ${libro.pagine} pagine`));
+  info.appendChild(el("p", "scheda-trama", proteggi(libro.trama)));
 
   const etichette = el("ul", "etichette");
   etichette.setAttribute("aria-label", "Parole chiave");
-  libro.paroleChiave.forEach(parola => etichette.appendChild(el("li", "etichetta", parola)));
+  libro.paroleChiave.forEach(parola => etichette.appendChild(el("li", "etichetta", proteggi(parola))));
   info.appendChild(etichette);
 
-  info.appendChild(el("p", "scheda-nota", `<span class="nota-chi" aria-hidden="true">✍️ Il prof dice:</span> «${libro.notaDocente}»`));
+  info.appendChild(el("p", "scheda-nota", `<span class="nota-chi" aria-hidden="true">✍️ Il prof dice:</span> «${proteggi(libro.notaDocente)}»`));
 
   if (motivazione) info.appendChild(el("p", "scheda-motivazione", `💡 ${motivazione}`));
 
@@ -622,11 +736,14 @@ function mostraRisultati() {
     ? "Trovato! 🎯 Ecco il libro che fa per te:"
     : "Trovati! 🎯 Ecco due libri che fanno per te:");
 
-  daMostrare.forEach(libro => {
-    chat.appendChild(creaSchedaConsigliata(libro));
+  // I post-it entrano quando la frase ha finito di scriversi
+  dopoLaScrittura(() => {
+    daMostrare.forEach(libro => {
+      chat.appendChild(creaSchedaConsigliata(libro));
+    });
+    scorriInFondo();
+    pulsantiFinali();
   });
-  scorriInFondo();
-  pulsantiFinali();
 }
 
 function pulsantiFinali() {
@@ -639,8 +756,7 @@ function pulsantiFinali() {
 
 // Libro casuale: rispetta sempre classe e livello di lettura scelti
 function sorprendimi() {
-  const ammesse = difficoltaAmmesse();
-  const possibili = libriDellaClasse().filter(libro => ammesse.includes(libro.difficolta));
+  const possibili = libriBase();
   if (possibili.length === 0) { // non dovrebbe mai succedere, ma non si sa mai
     messaggioBot("Non ho sorprese adatte a te in questo momento… riprova ricominciando!");
     pulsantiFinali();
@@ -648,9 +764,11 @@ function sorprendimi() {
   }
   const libro = possibili[Math.floor(Math.random() * possibili.length)];
   messaggioBot("Il dado è tratto! 🎲 Ecco la tua sorpresa:");
-  chat.appendChild(creaScheda(libro, "Te lo consiglio perché ogni tanto il libro giusto è quello che non stavi cercando."));
-  scorriInFondo();
-  pulsantiFinali();
+  dopoLaScrittura(() => {
+    chat.appendChild(creaScheda(libro, "Te lo consiglio perché ogni tanto il libro giusto è quello che non stavi cercando."));
+    scorriInFondo();
+    pulsantiFinali();
+  });
 }
 
 /* ============================================================
@@ -661,7 +779,7 @@ function creaCellaCatalogo(libro) {
   cella.type = "button";
   cella.setAttribute("aria-label", `Apri la scheda di ${libro.titolo}`);
   cella.appendChild(creaCopertina(libro, true));
-  cella.appendChild(el("span", "cella-titolo", libro.titolo));
+  cella.appendChild(el("span", "cella-titolo", proteggi(libro.titolo)));
   cella.addEventListener("click", () => apriSchedaModale(libro));
   return cella;
 }
@@ -775,12 +893,20 @@ function creaVistaCatalogo() {
   return box;
 }
 
-// Catalogo dentro la chat (pulsante "Sfoglia tutto il catalogo")
+// Catalogo dentro la chat (pulsante "Sfoglia tutto il catalogo").
+// Se una griglia è già aperta più in su, viene tolta: altrimenti
+// a furia di premere il pulsante il quaderno si riempiva di
+// cataloghi identici uno sotto l'altro.
 function mostraCatalogo() {
+  chat.querySelectorAll(".catalogo-in-chat").forEach(vecchio => vecchio.remove());
   messaggioBot(`Ecco tutto il catalogo: <strong>${CATALOGO.length} libri</strong>. Usa i filtri per cercare e tocca una copertina per aprire la scheda. 📚`);
-  chat.appendChild(creaVistaCatalogo());
-  scorriInFondo();
-  pulsantiFinali();
+  dopoLaScrittura(() => {
+    const box = creaVistaCatalogo();
+    box.classList.add("catalogo-in-chat");
+    chat.appendChild(box);
+    scorriInFondo();
+    pulsantiFinali();
+  });
 }
 
 // Catalogo nella modale (pulsante 📚 Catalogo dell'header e

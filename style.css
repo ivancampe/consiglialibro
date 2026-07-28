@@ -127,6 +127,28 @@ button { font-family: inherit; }
   transform: rotate(-1.5deg);
 }
 
+/* Il marchio accanto al titolo. Le misure sono in "em", quindi
+   crescono e calano insieme al testo del logo senza altri ritocchi.
+   🔧 Se il libro ti sembra troppo grande o troppo piccolo rispetto
+   alla scritta, cambia SOLO --marchio qui sotto. */
+.logo {
+  --marchio: 0.92em;   /* dimensione del logo rispetto al titolo */
+  display: flex;
+  align-items: center;
+  gap: 0.12em;
+}
+
+.logo-marchio {
+  width: var(--marchio);
+  height: var(--marchio);
+  flex: none;
+  /* il tratto è disegnato a mano: una punta di rotazione contraria
+     a quella del titolo lo fa sembrare appoggiato, non incollato */
+  transform: rotate(2deg);
+}
+
+/* Vecchia emoji del logo: non più usata, si tiene per sicurezza
+   nel caso si torni indietro. */
 .logo-emoji { margin-right: 0.1em; }
 
 .sottotitolo {
