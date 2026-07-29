@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3.2">
 </head>
 <body>
 
@@ -56,7 +56,7 @@
                --inchiostro da .logo: cambi il colore del titolo e il
                logo lo segue. La dimensione si regola in style.css,
                classe .logo-marchio. -->
-          <svg class="logo-marchio" viewBox="0 0 32 32" fill="none"
+          <svg class="logo-marchio" width="40" height="40" viewBox="0 0 32 32" fill="none"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4.1 12C8.2 11 12.6 12.6 15.9 14.5C15.9 18.6 16.1 22.2 15.9 25.8C12.3 24 7.8 22.7 3.8 23.5C4.2 19.7 3.8 15.9 4.1 12Z"
                   fill="#fff3b0" stroke="currentColor" stroke-width="2.1"/>
@@ -111,10 +111,27 @@
       <div id="info-bio" class="info-blocco"></div>
       <h3 class="info-sezione">✉️ Contatti</h3>
       <ul class="contatti" id="contatti"></ul>
-      <h3 class="info-sezione">☕ Sostieni</h3>
-      <p class="info-blocco info-sostieni">Se vuoi sostenere i miei progetti:</p>
-      <div class="bmc-contenitore">
-        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="ivancampedelli" data-color="#ffe680" data-emoji="☕"  data-font="Cookie" data-text="Offrimi un caffè" data-outline-color="#2b3a55" data-font-color="#2b3a55" data-coffee-color="#ffffff" ></script>
+      <h3 class="info-sezione">🤝 Sostieni</h3>
+      <!-- Prima il modo gratuito di dare una mano (condividere),
+           poi quello a pagamento. Il testo dell'invito sta in
+           app.js (CONDIVIDI_INVITO_INFO). -->
+      <p class="info-blocco info-condividi-testo" id="condividi-invito"></p>
+      <div class="condividi-contenitore">
+        <button type="button" id="btn-condividi-info" class="btn-condividi">
+          <span aria-hidden="true">📤</span>
+          <span class="etichetta-condividi">Condividi Consiglialibro</span>
+        </button>
+      </div>
+      <p class="info-blocco info-sostieni">Oppure, se vuoi sostenere i miei progetti:</p>
+      <!-- Il pulsante del caffè è disegnato in casa, con lo stesso
+           tratto a mano di quello sopra (prima era il widget di
+           Buy Me a Coffee, che arrivava da un altro sito e aveva un
+           aspetto tutto suo). L'indirizzo sta in app.js, CAFFE_URL. -->
+      <div class="caffe-contenitore">
+        <a id="link-caffe" class="btn-caffe" href="#" target="_blank" rel="noopener">
+          <span aria-hidden="true">☕</span>
+          <span class="etichetta-caffe">Offrimi un caffè</span>
+        </a>
       </div>
     </div>
   </div>
@@ -136,7 +153,7 @@
     </div>
   </div>
 
-  <script src="catalogo.js"></script>
-  <script src="app.js"></script>
+  <script src="catalogo.js?v=3.2"></script>
+  <script src="app.js?v=3.2"></script>
 </body>
 </html>

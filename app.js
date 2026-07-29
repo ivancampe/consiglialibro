@@ -22,6 +22,39 @@ const INSTAGRAM_NOME = "@ivancampedelli";                 // testo mostrato acca
 const SITO_URL  = "https://www.ivancampedelli.it";
 const SITO_NOME = "ivancampedelli.it";        // testo mostrato accanto all'icona
 
+// --- Il caffè (finestra Info, sezione "Sostieni") -------------
+// La pagina dove si arriva premendo "Offrimi un caffè".
+const CAFFE_URL   = "https://www.buymeacoffee.com/ivancampedelli";
+const CAFFE_TESTO = "Offrimi un caffè";
+
+// --- Condivisione ---------------------------------------------
+// ⚠️ QUI VIVE L'INDIRIZZO DEL SITO (uno dei punti da correggere
+// se un giorno traslocasse: gli altri sono nei due file HTML,
+// nel blocco "ANTEPRIMA QUANDO CONDIVIDI IL LINK").
+// Si condivide SEMPRE la pagina principale, anche da
+// index_studenti.html: se il link esce dalle classi, chi lo
+// riceve deve poter aprire la finestra Info e capire chi c'è
+// dietro al progetto.
+const URL_CONDIVISIONE = "https://profcampedelli.netsons.org/consiglialibro/";
+
+// Il titolo della condivisione. Attenzione: molte app (WhatsApp
+// e Telegram in testa) lo IGNORANO e incollano solo il testo e
+// il link — per questo i due testi qui sotto si reggono da soli.
+const CONDIVIDI_TITOLO = "Consiglialibro 📖";
+
+// Testo proposto agli studenti, in fondo al quiz.
+const CONDIVIDI_TESTO_STUDENTI =
+  "Consiglialibro 📖 — Ho trovato il mio prossimo libro qui!";
+
+// Testo proposto nella finestra Info (tono adulto: colleghi,
+// genitori, chiunque possa far crescere il progetto).
+const CONDIVIDI_TESTO_INFO =
+  "Consiglialibro 📖 — Un sito che aiuta i ragazzi delle medie a trovare il libro giusto. I libri sono letti e scelti da un prof.";
+
+// La frase che introduce il pulsante nella finestra Info.
+const CONDIVIDI_INVITO_INFO =
+  "Condividi Consiglialibro per far crescere il progetto: passaparola con studenti, genitori e colleghi.";
+
 // --- Emoji dei formati ----------------------------------------
 // Vocabolario ufficiale dei formati (i pulsanti mostrano solo
 // quelli presenti in catalogo). Se in catalogo.js inventi un
@@ -397,6 +430,15 @@ function gruppoOpzioni(opzioni) {
       (opz.dettaglio ? `<small>${proteggi(opz.dettaglio)}</small>` : "") +
       `</span>`;
     btn.addEventListener("click", () => {
+      // AZIONE SUL POSTO (opz.azioneSulPosto): il pulsante fa
+      // qualcosa senza far avanzare la conversazione — la fila
+      // di pulsanti resta dov'è e non viene scritta nessuna
+      // risposta in penna rossa. Serve a "📤 Condividi", che
+      // apre il menu di sistema SOPRA la pagina: quando si
+      // richiude, il quaderno deve essere rimasto com'era.
+      // L'azione riceve il pulsante, così può cambiarsi
+      // l'etichetta (il "Link copiato ✓").
+      if (opz.azioneSulPosto) { opz.azione(btn); return; }
       gruppo.remove();
       messaggioUtente(`${opz.emoji ? opz.emoji + " " : ""}${opz.label}`);
       setTimeout(opz.azione, RITARDO_MESSAGGIO);
@@ -725,7 +767,7 @@ function mostraRisultati() {
       "Non è colpa tua: è un ottimo motivo per farmi leggere di più! " +
       "Intanto prova a ricominciare cambiando qualcosa, oppure lasciati sorprendere."
     );
-    pulsantiFinali();
+    pulsantiFinali(false);   // niente invito a condividere: prima il consiglio
     return;
   }
 
@@ -746,12 +788,27 @@ function mostraRisultati() {
   });
 }
 
-function pulsantiFinali() {
-  gruppoOpzioni([
+// I pulsanti in fondo a ogni giro.
+// `conCondivisione` è false in un solo caso: quando non è stato
+// trovato nessun libro. Lì invitare a far girare il sito
+// stonerebbe — prima diamo un consiglio, poi chiediamo il
+// passaparola.
+function pulsantiFinali(conCondivisione = true) {
+  const opzioni = [
     { emoji: "🔄", label: "Ricomincia",                 azione: avvia },
     { emoji: "🎲", label: "Sorprendimi!",               azione: sorprendimi },
     { emoji: "📚", label: "Sfoglia tutto il catalogo",  azione: mostraCatalogo }
-  ]);
+  ];
+  if (conCondivisione) {
+    opzioni.push({
+      emoji: "📤",
+      label: "Condividi",
+      classe: "opzione-condividi",
+      azioneSulPosto: true,
+      azione: btn => condividi(CONDIVIDI_TESTO_STUDENTI, btn)
+    });
+  }
+  gruppoOpzioni(opzioni);
 }
 
 // Libro casuale: rispetta sempre classe e livello di lettura scelti
@@ -759,7 +816,7 @@ function sorprendimi() {
   const possibili = libriBase();
   if (possibili.length === 0) { // non dovrebbe mai succedere, ma non si sa mai
     messaggioBot("Non ho sorprese adatte a te in questo momento… riprova ricominciando!");
-    pulsantiFinali();
+    pulsantiFinali(false);   // come sopra: a mani vuote non si chiede il passaparola
     return;
   }
   const libro = possibili[Math.floor(Math.random() * possibili.length)];
@@ -769,6 +826,95 @@ function sorprendimi() {
     scorriInFondo();
     pulsantiFinali();
   });
+}
+
+/* ============================================================
+   Condivisione
+   ============================================================
+   Un tocco solo dove il browser sa condividere (in pratica tutti
+   gli smartphone): si apre il menu di sistema con WhatsApp,
+   Classroom, Telegram… È il motivo per cui questa strada batte
+   qualunque fila di iconcine social.
+   Dove quel menu non esiste (Firefox su computer, qualche
+   browser scolastico) il ripiego è copiare il link negli
+   appunti e dirlo con un "Link copiato ✓".
+   Si condivide sempre URL_CONDIVISIONE, mai la pagina corrente:
+   vedi la nota in cima al file.
+   ============================================================ */
+
+// Quanto resta visibile il "Link copiato ✓" prima che il
+// pulsante torni com'era.
+const DURATA_FEEDBACK = 2200;
+
+// Ultimo ripiego per copiare, quando navigator.clipboard non
+// c'è o viene rifiutato (succede con le pagine aperte in locale
+// col doppio clic): una casella di testo fuori schermo,
+// selezionata e copiata al volo.
+function copiaAllaVecchiaManiera(testo) {
+  const casella = document.createElement("textarea");
+  casella.value = testo;
+  casella.setAttribute("readonly", "");
+  casella.style.position = "fixed";
+  casella.style.top = "-1000px";
+  document.body.appendChild(casella);
+  casella.select();
+  let riuscito = false;
+  try { riuscito = document.execCommand("copy"); } catch (errore) { riuscito = false; }
+  document.body.removeChild(casella);
+  return riuscito;
+}
+
+// Cambia per qualche istante l'etichetta del pulsante e lo
+// annuncia a chi usa uno screen reader.
+function feedbackCondivisione(pulsante, riuscito) {
+  annuncia(riuscito
+    ? "Link di Consiglialibro copiato negli appunti."
+    : `Non sono riuscito a copiare il link. L'indirizzo è ${URL_CONDIVISIONE}`);
+
+  if (!pulsante) return;
+  // I due pulsanti hanno struttura diversa (quello del quiz ha
+  // emoji e testo in due span): qui si cerca il pezzo che
+  // contiene l'etichetta, con il pulsante stesso come ripiego.
+  const etichetta = pulsante.querySelector(".opzione-testo, .etichetta-condividi") || pulsante;
+  if (pulsante.dataset.inAttesa === "si") return;   // doppio clic: lascia fare al primo
+  pulsante.dataset.inAttesa = "si";
+  const testoPrima = etichetta.textContent;
+  etichetta.textContent = riuscito ? "Link copiato ✓" : "Copia tu il link 🙏";
+  pulsante.classList.add("condividi-fatto");
+  setTimeout(() => {
+    etichetta.textContent = testoPrima;
+    pulsante.classList.remove("condividi-fatto");
+    pulsante.dataset.inAttesa = "no";
+  }, DURATA_FEEDBACK);
+}
+
+// `testo` cambia a seconda di chi condivide: gli studenti in
+// fondo al quiz, gli adulti dalla finestra Info.
+// `pulsante` serve solo per il "Link copiato ✓": se manca, la
+// condivisione funziona lo stesso.
+async function condividi(testo, pulsante) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: CONDIVIDI_TITOLO, text: testo, url: URL_CONDIVISIONE });
+      return;   // condiviso: il menu di sistema ha già dato conferma
+    } catch (errore) {
+      // Menu aperto e poi chiuso: non è un errore, non deve
+      // succedere niente (né messaggi né copie negli appunti).
+      if (errore && errore.name === "AbortError") return;
+      // Qualsiasi altro intoppo: si prosegue col ripiego.
+    }
+  }
+
+  let copiato = false;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(URL_CONDIVISIONE);
+      copiato = true;
+    } catch (errore) { copiato = false; }
+  }
+  if (!copiato) copiato = copiaAllaVecchiaManiera(URL_CONDIVISIONE);
+
+  feedbackCondivisione(pulsante, copiato);
 }
 
 /* ============================================================
@@ -982,6 +1128,25 @@ function riempiInfo() {
     <li><a href="${INSTAGRAM_URL}" target="_blank" rel="noopener">${ICONE.instagram}<span>${INSTAGRAM_NOME}</span></a></li>
     <li><a href="${SITO_URL}" target="_blank" rel="noopener">${ICONE.sito}<span>${SITO_NOME}</span></a></li>
   `;
+
+  // Invito a condividere, appena sopra il pulsante del caffè:
+  // prima il modo gratuito di dare una mano, poi l'altro.
+  const invito = document.getElementById("condividi-invito");
+  if (invito) invito.textContent = CONDIVIDI_INVITO_INFO;
+
+  const btnCondividi = document.getElementById("btn-condividi-info");
+  if (btnCondividi) {
+    btnCondividi.addEventListener("click", () =>
+      condividi(CONDIVIDI_TESTO_INFO, btnCondividi));
+  }
+
+  // Il pulsante del caffè: indirizzo ed etichetta stanno in cima
+  // al file, come per gli altri collegamenti della finestra Info.
+  const linkCaffe = document.getElementById("link-caffe");
+  if (linkCaffe) {
+    linkCaffe.href = CAFFE_URL;
+    linkCaffe.querySelector(".etichetta-caffe").textContent = CAFFE_TESTO;
+  }
 }
 
 /* ============================================================

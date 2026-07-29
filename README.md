@@ -1,156 +1,218 @@
 # 📖 Consiglialibro
 
-Un piccolo sito che consiglia libri agli studenti della scuola secondaria di primo grado (11–13 anni). Funziona interamente nel browser: **niente server, niente registrazione, niente dati raccolti**. Puoi aprirlo con un doppio clic su `index.html` oppure pubblicarlo gratis su GitHub Pages.
+**Un consulente di lettura per la tua classe, che sta in una cartella.**
 
-> 📚 **Il catalogo qui dentro è solo un campione.** I libri di `catalogo.js` servono a far vedere com'è fatta una scheda e a provare il sito subito dopo averlo scaricato: **non è un elenco che viene tenuto aggiornato**. Il senso di Consiglialibro è che ogni insegnante ci metta *le proprie* letture, con le proprie note — quelle sono la parte che vale. Sostituisci pure tutto il contenuto di `catalogo.js` con i tuoi libri: le istruzioni sono più sotto, e non serve saper programmare.
+Consiglialibro è un piccolo sito che consiglia libri ai ragazzi della scuola secondaria di primo grado. Lo studente risponde a sei domande a colpi di pulsante e riceve uno o due libri scelti per lui, ognuno con la nota personale di chi glielo consiglia: tu.
 
-## Come funziona
+Non è un catalogo di biblioteca e non vuole esserlo. È il modo di far arrivare a un ragazzo di dodici anni la frase che di solito gli diresti in corridoio — *«questo secondo me ti piace, fidati»* — anche quando in corridoio non ci sei.
 
-Lo studente risponde a sei domande a colpi di pulsante (classe → esperienza di lettura → formato → genere → effetto cercato → lunghezza) e riceve una o due schede libro che compaiono come **post-it attaccati con lo scotch** su un quaderno a righe, con la nota personale dell'insegnante.
+Funziona **interamente nel browser**: niente server, niente database, niente registrazione, nessun dato raccolto. Nessuna competenza di programmazione richiesta per usarlo e riempirlo.
 
-L'ordine delle domande non è casuale: **prima i due filtri rigidi** (classe ed esperienza di lettura), che insieme decidono quali libri esistono davvero, **poi le domande che pesano sul punteggio**, dalla più forte alla più leggera. Il vantaggio è che le domande 3 e 4 mostrano solo opzioni che portano davvero a un libro: se in 1ª non c'è nessun saggio, il pulsante "Saggio" non compare proprio, e lo studente non finisce mai in un vicolo cieco. Classe, livello di lettura e formato (se scelto) restano filtri rigidi: non viene mai proposto un libro fuori da questi paletti; genere, effetto e lunghezza pesano invece sul punteggio con cui i libri vengono messi in classifica.
+> 📚 **I libri che trovi dentro sono solo un campione.** Servono a farti vedere com'è fatta una scheda e a provare il sito appena scaricato. Non sono un elenco tenuto aggiornato, e non sono il punto. Il punto è che tu ci metta **le tue** letture, con **le tue** note: quella è la parte che vale, ed è l'unica che i tuoi studenti riconosceranno come tua.
 
-La domanda sul genere mostra solo i generi disponibili per le scelte fatte finora (con l'opzione "Qualsiasi 🤷"); se ne resta uno solo il bot la risponde d'ufficio con una nota simpatica, ma la domanda conta lo stesso nel totale, così il contatore "Domanda N di 6" non salta mai un numero. Su ogni consiglio c'è il pulsante "L'ho già letto 🙋" che, con tanto di timbro «Letto ✓», lo sostituisce col successivo in classifica.
+---
 
-Il catalogo completo è sempre a portata di mano: dal pulsante **📚 Catalogo** nell'header, dalla parola "Catalogo" nella nota sotto il titolo, o dal pulsante "Sfoglia tutto il catalogo" a fine quiz. La vista catalogo ha una casella di ricerca (ovunque, o solo per titolo / autore / parola chiave, ignorando maiuscole e accenti) e una barra di filtri combinabili tra loro e con la ricerca.
+## Provalo in trenta secondi
+
+Scarica la cartella e fai **doppio clic su `index.html`**. Si apre nel browser e funziona: non serve installare niente, non serve essere online (a parte i caratteri, vedi *Note tecniche*).
+
+Fai un giro di domande fino in fondo, poi apri **📚 Catalogo** in alto e prova ricerca e filtri. In tre minuti hai capito tutto quello che serve.
+
+## ⚠️ Le prime tre cose da cambiare
+
+La cartella che hai in mano è configurata con i dati di chi te l'ha passata. Prima di far vedere il sito a chiunque, sistema queste tre cose — sono tutte facili.
+
+**1. I libri.** Apri `catalogo.js` e sostituisci il campione con le tue letture. Le istruzioni sono nella sezione *Aggiungere o modificare un libro*.
+
+**2. I tuoi dati.** Apri `app.js`: nelle prime righe ci sono e-mail, Instagram, sito, la bio della finestra Info e il link per il caffè. **Sono di un'altra persona.** Cambiali o cancellali, altrimenti i tuoi studenti scriveranno a un insegnante che non conosci.
+
+**3. Gli indirizzi**, ma solo se hai intenzione di pubblicarlo online. Vedi *Metterlo online*: se non li correggi, chi condivide il tuo sito su WhatsApp vedrà comparire l'anteprima del sito di qualcun altro.
+
+---
+
+## Come funziona il consiglio
+
+Le sei domande sono: **classe → esperienza di lettura → formato → genere → effetto cercato → lunghezza.** L'ordine non è casuale, ed è la parte del progetto su cui vale la pena spendere due minuti.
+
+**Prima i due filtri rigidi** (classe ed esperienza di lettura). Insieme decidono quali libri esistono davvero per quello studente. **Poi le domande che pesano sul punteggio**, dalla più forte alla più leggera.
+
+Il vantaggio di quest'ordine è che le domande successive mostrano **solo opzioni che portano davvero a un libro**. Se per la prima non hai in catalogo nessun saggio, il pulsante "Saggio" non compare proprio: lo studente non finisce mai in un vicolo cieco, e non gli capita mai di rispondere a sei domande per sentirsi dire "non ho niente per te".
+
+- **Filtri rigidi** (un libro fuori da questi paletti non viene mai proposto): classe, livello di lettura, formato se scelto.
+- **Segnali che pesano sul punteggio** (mettono i libri in classifica): genere 50 punti, effetto 30, lunghezza 10, più un piccolo bonus per le parole chiave affini all'effetto cercato.
+
+I pesi sono tarati perché **il genere resti il segnale più forte in assoluto**: chi ha chiesto un fantasy deve ricevere un fantasy, anche se un altro libro pareggia su tutto il resto. Se metti mano ai numeri (sono in `app.js`, funzione `punteggio`), tieni presente questo equilibrio.
+
+Due dettagli che sembrano piccoli e invece si notano molto:
+
+- La domanda sul **genere** mostra solo i generi ancora disponibili. Se ne resta uno solo, il bot risponde d'ufficio con una battuta — ma la domanda conta lo stesso nel totale, così il contatore "Domanda N di 6" non salta mai un numero.
+- Su ogni consiglio c'è **"L'ho già letto 🙋"**: timbra il libro con «Letto ✓» e lo sostituisce col successivo in classifica. Serve più spesso di quanto immagini.
+
+Il catalogo completo è sempre raggiungibile: dal pulsante **📚 Catalogo** in alto, dalla parola "Catalogo" nella nota sotto il titolo, o da "Sfoglia tutto il catalogo" a fine giro. Ha una ricerca (ovunque, oppure solo titolo / autore / parola chiave, ignorando maiuscole e accenti) e cinque filtri combinabili tra loro e con la ricerca.
 
 ## I file del progetto
 
 | File | A cosa serve |
 |------|--------------|
-| `index.html` | La struttura della pagina (versione completa, con Info e contatti). |
-| `index_studenti.html` | **Copia per gli studenti**: identica ma senza pulsante Info, contatti e social. È la pagina da diffondere in classe. |
-| `style.css` | Colori, caratteri e aspetto grafico (tema **quaderno a righe**; vedi la sezione "L'aspetto" più sotto). |
-| `app.js` | La logica del sito **e i testi personalizzabili** (in cima al file). |
-| `catalogo.js` | **Il catalogo dei libri**: è il file che modificherai più spesso. |
-| `copertine/` | La cartella con le immagini delle copertine. |
-| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Il marchio (libro + spunta) come icona del sito e della schermata home. |
-| `icon-192.png`, `icon-512.png`, `manifest.json` | Servono per "aggiungere alla schermata home" come se fosse un'app. |
-| `og-image.png` | L'immagine che compare quando condividi il link su WhatsApp, Classroom o Telegram. |
+| `catalogo.js` | **I libri.** È il file che aprirai più spesso, forse l'unico. |
+| `copertine/` | Le immagini delle copertine. |
+| `app.js` | La logica del sito **e tutti i testi personalizzabili**, raccolti in cima al file. |
+| `index.html` | La pagina completa, con la finestra Info e i contatti. |
+| `index_studenti.html` | **La copia per le classi**: identica, ma senza Info, contatti e social. |
+| `style.css` | Colori, caratteri e aspetto (tema *quaderno a righe*). |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Il marchio come icona del sito e della schermata home. |
+| `icon-192.png`, `icon-512.png`, `manifest.json` | Per "aggiungere alla schermata home" come se fosse un'app. |
+| `og-image.png` | L'immagine che compare condividendo il link su WhatsApp, Classroom o Telegram. |
 
-> ⚠️ **Le due pagine vanno tenute allineate**: se modifichi qualcosa in `index.html` (a parte le parti Info), riporta la stessa modifica anche in `index_studenti.html`. Catalogo, testi e grafica invece sono condivisi (`catalogo.js`, `app.js`, `style.css`): lì basta modificare una volta sola e vale per entrambe.
+### Perché due pagine
+
+`index.html` è la versione pubblica: ha la finestra **Info** con chi sei, come contattarti e il pulsante per condividere. `index_studenti.html` è la stessa cosa senza quella finestra — è la pagina da dare alle classi, dove i contatti personali non servono e i social sono un invito che è meglio non fare.
+
+> ⚠️ **Le due pagine vanno tenute allineate.** Se modifichi qualcosa in `index.html` (a parte le parti Info), riporta la stessa modifica anche in `index_studenti.html`. Catalogo, testi e grafica sono invece condivisi (`catalogo.js`, `app.js`, `style.css`): lì basta modificare una volta sola e vale per entrambe.
+
+---
 
 ## ➕ Aggiungere o modificare un libro
 
-Apri `catalogo.js` con un editor di testo (va bene anche il Blocco note, meglio ancora [Visual Studio Code](https://code.visualstudio.com/), gratuito).
+Apri `catalogo.js` con un editor di testo. Va bene anche il Blocco note; meglio ancora [Visual Studio Code](https://code.visualstudio.com/), che è gratuito e ti segnala da solo se dimentichi una virgola.
 
-1. Copia un blocco libro esistente, da `{` fino a `},` compresa la virgola.
-2. Incollalo prima della riga finale `];`.
-3. Modifica i testi tra virgolette.
-
-Esempio di blocco:
+1. Copia un blocco libro esistente, da `{` fino a `},` compresa la virgola finale.
+2. Incollalo prima della riga conclusiva `];`.
+3. Cambia i testi tra virgolette.
 
 ```js
 {
   titolo: "Wonder",
   autore: "R.J. Palacio",
   genere: ["formazione", "psicologico"], // uno o più, vedi elenco qui sotto
-  classi: [1, 2, 3],               // classi adatte: [1], [2, 3], [1, 2, 3]…
-  effetto: ["emozionarmi", "riflettere"], // vedi elenco qui sotto
-  formato: "romanzo",              // UN solo valore, vedi qui sotto
+  classi: [1, 2, 3],                     // classi adatte: [1], [2, 3], [1, 2, 3]…
+  effetto: ["emozionarmi", "riflettere"],
+  formato: "romanzo",                    // UN solo valore
   paroleChiave: ["amicizia", "diversità", "scuola"],
   trama: "Breve trama senza spoiler (2-3 frasi).",
-  difficolta: "facile",            // facile | media | impegnativa
-  pagine: 285,                     // numero, senza virgolette
+  difficolta: "facile",                  // facile | media | impegnativa
+  pagine: 285,                           // numero, senza virgolette
   notaDocente: "Il tuo commento personale.",
-  copertina: "wonder.jpg"          // nome del file dentro /copertine
+  copertina: "wonder.jpg"                // nome del file dentro /copertine
 },
 ```
 
-Regole importanti:
+Per **eliminare** un libro, cancella tutto il suo blocco `{ … },`.
 
-- **formato**: che tipo di libro è, **un solo valore** (è un filtro rigido: chi vuole un fumetto non vuole un romanzo). Vocabolario ufficiale: `romanzo`, `racconti`, `poesia`, `manga & fumetto`, `saggio`, `albo illustrato`, `diario`. Puoi anche coniare etichette nuove: compaiono **automaticamente** tra i pulsanti della domanda "Che tipo di libro preferisci?" e nel filtro Formato del catalogo (per l'emoji, aggiungila in `EMOJI_FORMATI` in cima ad `app.js`, altrimenti 📚). Scrivila sempre uguale (tutto minuscolo); nei casi ibridi scegli il formato che meglio descrive l'esperienza di lettura (un diario a fumetti → `manga & fumetto`).
-- **genere**: etichetta **libera**, **uno o più valori**. Vocabolario ufficiale: `fiaba & favola`, `avventura`, `umorismo`, `fantasy`, `giallo`, `mistero & fantastico`, `formazione`, `psicologico`, `storico & sociale`, `romance`, `fantascienza`, `classico`, `biografia & autobiografia`, `horror` — tutti già con emoji e colore in `STILE_GENERI`. Più generi si scrivono tra parentesi quadre: `genere: ["avventura", "formazione"]` — il primo è quello principale (decide emoji e colore della copertina segnaposto), gli altri contano comunque per la domanda e per il filtro. Anche qui puoi inventare generi nuovi (emoji e colore in `STILE_GENERI` in cima ad `app.js`, altrimenti 📕 e un colore neutro); scrivili sempre uguali, tutto minuscolo.
-- **classi**: le classi per cui il libro è adatto, tra parentesi quadre. Può essere una sola (`[1]`) o più di una (`[2, 3]`). È un filtro rigido: lo studente vede solo i libri della sua classe.
-- **effetto**: che cosa "fa" il libro a chi lo legge. Uno o più valori tra parentesi quadre, scelti esattamente tra questi quattro: `"ridere"`, `"emozionarmi"`, `"brividi"`, `"riflettere"`. Esempio: `["ridere", "emozionarmi"]`.
-- **difficolta** deve essere `facile`, `media` oppure `impegnativa`.
-- Non cancellare virgolette, virgole o parentesi: se il sito appare "vuoto" dopo una modifica, il 99% delle volte manca una virgola o una virgoletta in `catalogo.js`.
+### I campi, uno per uno
 
-Per eliminare un libro, cancella tutto il suo blocco `{ ... },`.
+- **`formato`** — che tipo di libro è. **Un solo valore**, ed è un filtro rigido: chi vuole un fumetto non vuole un romanzo. Vocabolario: `romanzo`, `racconti`, `poesia`, `manga & fumetto`, `saggio`, `albo illustrato`, `diario`. Puoi coniare etichette nuove: compaiono **da sole** tra i pulsanti e nei filtri (per l'emoji, aggiungila in `EMOJI_FORMATI` in cima ad `app.js`, altrimenti esce 📚). Scrivile sempre uguali, tutto minuscolo. Nei casi ibridi scegli il formato che descrive meglio *l'esperienza di lettura*: un diario a fumetti è `manga & fumetto`.
+
+- **`genere`** — etichetta libera, **uno o più valori**. Vocabolario già pronto, con emoji e colore: `fiaba & favola`, `avventura`, `umorismo`, `fantasy`, `giallo`, `mistero & fantastico`, `formazione`, `psicologico`, `storico & sociale`, `romance`, `fantascienza`, `classico`, `biografia & autobiografia`, `horror`. Con più generi si usano le parentesi quadre: `["avventura", "formazione"]`. Il **primo è il principale** (decide emoji e colore della copertina segnaposto), gli altri contano comunque per la domanda e per il filtro. Anche qui puoi inventarne di nuovi, aggiungendoli a `STILE_GENERI` in `app.js`.
+
+- **`classi`** — le classi per cui il libro è adatto, tra parentesi quadre: `[1]`, `[2, 3]`, `[1, 2, 3]`. Filtro rigido: lo studente vede solo i libri della sua classe.
+
+- **`effetto`** — che cosa *fa* il libro a chi lo legge. Uno o più valori scelti **esattamente** tra questi quattro: `"ridere"`, `"emozionarmi"`, `"brividi"`, `"riflettere"`.
+
+- **`difficolta`** — `facile`, `media` oppure `impegnativa`. Insieme al livello di lettura dichiarato dallo studente è un filtro rigido.
+
+- **`paroleChiave`** — da tre a sei parole. Oltre a servire per la ricerca, danno un piccolo bonus di punteggio quando sono affini all'effetto cercato.
+
+- **`notaDocente`** — la tua voce. È il campo che rende il sito tuo: scrivi come parleresti, non come scriveresti in una scheda di lettura.
+
+> 💡 **Se dopo una modifica il sito appare vuoto**, nel 99% dei casi manca una virgola o una virgoletta in `catalogo.js`. Non serve cercare a lungo: guarda l'ultima cosa che hai toccato.
+
+### Tenere il catalogo in equilibrio
+
+Il sito è bravo quanto il catalogo che gli dai. Ogni tanto conviene contare: se hai trenta libri ma solo due fanno ridere, chi cerca di ridere riceverà sempre quei due. Vale la pena controllare la copertura di **classi**, **effetti** e **difficoltà** — ed è normale che la prima sia la più scoperta, perché i libri facili si finiscono in fretta.
 
 ## 🖼️ Aggiungere una copertina
 
-1. Procurati l'immagine della copertina (una foto o la copertina ufficiale dell'edizione che avete in biblioteca).
-2. Formato consigliato: **JPG** (va bene anche PNG o WebP), proporzioni verticali 2:3, dimensioni suggerite **circa 400×600 pixel** (bastano e il sito resta veloce).
-3. Dai al file un nome semplice, **senza spazi né accenti**: ad esempio `wonder.jpg`, `lo-hobbit.jpg`.
-4. Copia il file nella cartella `copertine/`.
-5. Scrivi lo stesso nome nel campo `copertina` del libro in `catalogo.js`.
+1. Procurati l'immagine: una foto, o la copertina dell'edizione che avete in biblioteca.
+2. Formato consigliato **JPG** (va bene anche PNG o WebP), verticale 2:3, circa **400×600 pixel**. Bastano, e il sito resta veloce.
+3. Dai al file un nome semplice, **senza spazi né accenti**: `wonder.jpg`, `lo-hobbit.jpg`.
+4. Copialo nella cartella `copertine/`.
+5. Scrivi lo stesso nome nel campo `copertina` del libro.
 
-Finché l'immagine non c'è, il sito mostra automaticamente un segnaposto elegante con titolo e autore: nessun errore, nessun riquadro rotto.
+Finché l'immagine non c'è, il sito mostra da solo un segnaposto elegante con titolo e autore: nessun errore, nessun riquadro rotto. Puoi tranquillamente inserire i libri prima e le copertine poi.
 
-## ✏️ Modificare i testi (sottotitolo, Info, contatti)
+## ✏️ I testi da personalizzare
 
-Apri `app.js`: **tutti i testi personalizzabili sono nelle prime righe del file**, ben commentati.
+Stanno **tutti nelle prime righe di `app.js`**, commentati uno per uno. Non serve toccare altro.
 
-- `SOTTOTITOLO` → la frase sotto il titolo nell'header.
-- `NOTA_CATALOGO` → la piccola nota con il pallino verde.
-- `EMAIL_DOCENTE`, `INSTAGRAM_URL`, `INSTAGRAM_NOME`, `SITO_URL`, `SITO_NOME` → i contatti della finestra Info.
-- `INFO_DESCRIZIONE` e `INFO_BIO` → i paragrafi della finestra Info (puoi usare `<p>…</p>` per i paragrafi, `<strong>…</strong>` per il grassetto, `<em>…</em>` per il corsivo).
+| Costante | Che cos'è |
+|---|---|
+| `SOTTOTITOLO` | La frase sotto il titolo, in alto. |
+| `NOTA_CATALOGO` | La nota col pallino verde (la parola "catalogo" diventa cliccabile da sola). |
+| `EMAIL_DOCENTE`, `INSTAGRAM_URL`, `INSTAGRAM_NOME`, `SITO_URL`, `SITO_NOME` | I contatti della finestra Info. |
+| `INFO_DESCRIZIONE`, `INFO_BIO` | I due paragrafi della finestra Info. Accettano `<p>`, `<strong>`, `<em>`. |
+| `URL_CONDIVISIONE` | L'indirizzo che viene condiviso dal pulsante 📤. |
+| `CONDIVIDI_TITOLO`, `CONDIVIDI_TESTO_STUDENTI`, `CONDIVIDI_TESTO_INFO`, `CONDIVIDI_INVITO_INFO` | I testi della condivisione. |
+| `CAFFE_URL`, `CAFFE_TESTO` | Dove porta e come si chiama il pulsante "Offrimi un caffè". |
 
-## 🌐 Dove vive il sito, e a che serve GitHub
+## 📤 Il pulsante Condividi
 
-Due cose diverse, che conviene non confondere:
+Sta in **due punti**, perché il pubblico è diverso.
 
-- **Il sito vero** è pubblicato sullo spazio web personale, all'indirizzo
-  <https://profcampedelli.netsons.org/consiglialibro/>. È questo il link da dare alle classi
-  (funziona benissimo anche come QR code da appendere in biblioteca).
-- **GitHub** serve solo a *condividere i file* con altri insegnanti che vogliano riusare o
-  adattare Consiglialibro. Non ospita il sito: è un magazzino ordinato del codice.
+- **In fondo a ogni giro di domande**, accanto a "Ricomincia" e "Sorprendimi!". È il momento in cui lo studente ha appena ricevuto un consiglio che gli piace: è lì che viene voglia di passarlo a un compagno. Non compare quando il quiz **non** ha trovato nessun libro — a mani vuote non si chiede il passaparola.
+- **Nella finestra Info**, sopra il pulsante del caffè: prima il modo gratuito di dare una mano, poi l'altro. Qui il pubblico è adulto — colleghi, genitori — e il testo è diverso. Questa parte non esiste in `index_studenti.html`, ed è proprio per questo che serve anche il pulsante in fondo al quiz.
 
-L'indirizzo del sito è scritto dentro `index.html` e `index_studenti.html`, nel blocco
-"ANTEPRIMA QUANDO CONDIVIDI IL LINK": ci sono un `canonical`, un `og:url` e due `og:image`.
-Se un giorno il sito traslocasse, sono quelli i punti da correggere.
+Sullo smartphone si apre il **menu di condivisione del telefono** (WhatsApp, Classroom, Telegram): un tocco solo. Dove quel menu non esiste — Firefox su computer, qualche browser scolastico — il sito **copia il link negli appunti** e il pulsante diventa per due secondi "Link copiato ✓". Se apri il menu e lo chiudi senza condividere, non succede nulla.
 
-### Aggiornare il sito sullo spazio web
+> 🔗 Si condivide sempre **la pagina principale**, anche partendo da `index_studenti.html`. Se il link esce dalle classi e arriva a un genitore o a un collega, chi lo riceve deve poter aprire la finestra Info e capire chi c'è dietro.
 
-Carica via FTP (o dal gestore file del pannello Netsons) i file modificati dentro la cartella
-`consiglialibro/`, sovrascrivendo quelli vecchi. Non serve toccare nient'altro.
+## 🌐 Metterlo online
 
-> ⚠️ Se **cancelli** un file (per esempio una copertina che non usi più), ricordati di
-> cancellarlo anche sul server: caricando i file non si elimina nulla, si sovrascrive soltanto.
+Non è obbligatorio: il sito funziona anche da una cartella su una LIM, su una chiavetta o nel registro elettronico come allegato. Ma un indirizzo web è comodo, soprattutto come **QR code appeso in biblioteca**.
 
-### Aggiornare il repository su GitHub
+Va bene qualunque spazio che serva file statici: lo spazio web della scuola, un hosting personale, GitHub Pages, Netlify. Si caricano i file così come sono — non c'è niente da installare né da configurare.
 
-Il modo più semplice, senza installare niente:
+**Se lo pubblichi, correggi gli indirizzi**, altrimenti l'anteprima su WhatsApp e Classroom mostrerà il sito di qualcun altro. Sono in due posti:
 
-1. Vai sul repository e clicca **Add file → Upload files**.
-2. Trascina i file modificati (o l'intera cartella del progetto: i file identici vengono ignorati).
-3. In fondo, nel riquadro del commit, scrivi due righe su cosa è cambiato — servono a te fra sei mesi.
-4. Clicca **Commit changes**.
+- in `index.html` e `index_studenti.html`, nel blocco *"ANTEPRIMA QUANDO CONDIVIDI IL LINK"*: un `canonical`, un `og:url` e due `og:image` per ciascuna pagina;
+- in `app.js`, la costante `URL_CONDIVISIONE`.
 
-I file **cancellati** vanno tolti a mano: aprili sul sito di GitHub, clicca i tre puntini in alto
-a destra e scegli **Delete file**. Il caricamento non se ne accorge da solo.
+> 🔁 **Il numero di versione, ogni volta che aggiorni.** In fondo alle due pagine i collegamenti finiscono con `?v=3.2`:
+>
+> ```html
+> <link rel="stylesheet" href="style.css?v=3.2">
+> <script src="catalogo.js?v=3.2"></script>
+> <script src="app.js?v=3.2"></script>
+> ```
+>
+> Ogni volta che modifichi `style.css`, `app.js` o `catalogo.js` e ricarichi online, **alza quel numero in tutti e sei i punti** (`3.3`, `3.4`…). Serve perché i browser tengono in memoria quei file per giorni: senza il cambio, chi ha già visitato il sito continua a vedere la versione vecchia. E se il CSS vecchio non conosce le novità della pagina, il risultato può essere vistoso — è già successo che il logo comparisse grande quanto mezzo schermo. Il file HTML non ha bisogno di versione: i browser lo ricontrollano da soli.
 
-Se ti capita spesso, vale la pena installare [GitHub Desktop](https://desktop.github.com/):
-mostra da solo l'elenco di cosa è cambiato, cancellazioni comprese, e si aggiorna con un clic.
+Due avvertenze finali. Se **cancelli** un file (una copertina che non usi più), toglilo anche dal server: caricando non si elimina nulla, si sovrascrive soltanto. E se cambi `og-image.png`, sappi che WhatsApp e Telegram tengono in memoria l'anteprima per giorni.
 
-### 💡 Quando cambi l'immagine di anteprima
-
-WhatsApp, Facebook e Telegram si tengono in memoria l'anteprima di un link per giorni: se
-sostituisci `og-image.png`, chi condivide il sito continuerà a vedere la vecchia figura.
-Per costringerli a rileggere la pagina, incolla l'indirizzo del sito nel
-[debugger di Facebook](https://developers.facebook.com/tools/debug/) e premi **Scrape Again**.
+---
 
 ## 🎨 L'aspetto: quaderno a righe
 
-Dalla versione 3 il sito ha la veste di un **quaderno a righe scritto a mano**, curato nei dettagli ma essenziale:
+Il sito ha la veste di un **quaderno a righe scritto a mano**, curata nei dettagli ma essenziale:
 
-- **Il foglio** ha righe azzurre, margine rosso, fori della spirale e, in cima, un'intestazione con la **data del giorno** che si aggiorna da sola.
+- **Il foglio** ha righe azzurre, margine rosso, fori della spirale e un'intestazione con la **data del giorno**, che si aggiorna da sola.
 - **La chat** è scritta a mano e compare con l'effetto **macchina da scrivere**, con un pennino che segue il testo; la risposta dello studente appare in penna rossa evidenziata.
-- **I libri consigliati** sono **post-it attaccati con lo scotch** che entrano con l'animazione di **pagina che si gira**; la copertina sembra una foto incollata e la difficoltà è un timbro rosso.
-- **Catalogo e Info** si aprono come altre pagine del quaderno (con post-it e scorrimento verticale); nel catalogo i post-it arricciano l'angolo al passaggio del mouse.
+- **I libri consigliati** sono **post-it attaccati con lo scotch**, che entrano con l'animazione della pagina che si gira; la copertina sembra una foto incollata e la difficoltà è un timbro rosso.
+- **Catalogo e Info** si aprono come altre pagine del quaderno.
 - Piccoli **scarabocchi a penna** decorano il margine destro.
 
-Approccio ai caratteri **ibrido**, per non sacrificare la leggibilità: font a mano (Caveat per i titoli, Kalam per il testo scritto) per chat, note e post-it; le **trame lunghe** restano in un font stampato leggibile (Roboto). Tutte le animazioni rispettano la preferenza di sistema "riduci animazioni".
+I caratteri seguono un approccio **ibrido**, per non sacrificare la leggibilità: font scritti a mano (Caveat per i titoli, Kalam per il testo) su chat, note e post-it; le **trame lunghe** restano in un font stampato (Roboto). Tutte le animazioni rispettano la preferenza di sistema *"riduci animazioni"*.
 
-> 🔧 **Un solo valore per la messa a punto**: in cima a `style.css`, tra le variabili `:root`, c'è `--riga-offset`. Regola quanto in alto o in basso cade la riga stampata rispetto al testo scritto a mano. Se il testo sembra "galleggiare" sopra la riga, rendilo più negativo (es. `-10px`); se sfonda sotto la riga, avvicinalo a `0`.
+> 🔧 **Un solo valore per la messa a punto.** In cima a `style.css`, tra le variabili `:root`, c'è `--riga-offset`: regola dove cade la riga stampata rispetto al testo scritto a mano. Se il testo sembra galleggiare sopra la riga, rendilo più negativo (es. `-10px`); se sfonda sotto, avvicinalo a `0`.
 
 ## Note tecniche
 
-- Nessuna libreria esterna: solo HTML, CSS e JavaScript "vanilla" (unica risorsa esterna: i caratteri Google Fonts — Caveat, Kalam e Roboto).
-- Il catalogo è in un file `.js` (non CSV) apposta: così il sito funziona anche aperto in locale con doppio clic, senza problemi di sicurezza del browser.
-- Il sito è responsive (pensato prima di tutto per lo smartphone), accessibile da tastiera e rispetta la preferenza di sistema "riduci animazioni".
-- **Il quaderno si scrive una riga alla volta**: i pulsanti di risposta compaiono solo quando la domanda ha finito di scriversi, e ogni messaggio aspetta che il precedente sia completo.
+Non servono per usare Consiglialibro. Servono se vuoi metterci le mani.
+
+- **Nessuna libreria esterna**: solo HTML, CSS e JavaScript "vanilla". L'unica risorsa presa da fuori sono i caratteri di Google Fonts. Se la tua scuola preferisce non far contattare server esterni dal browser degli studenti, puoi scaricare i tre font e servirli dalla tua cartella: il sito continua a funzionare identico.
+- **Il catalogo è un file `.js`, non un CSV**, apposta: così il sito funziona anche aperto in locale col doppio clic, senza incappare nelle regole di sicurezza del browser.
+- Il sito è **responsive** (pensato prima di tutto per lo smartphone), navigabile da tastiera e rispetta *"riduci animazioni"*.
+- **Il quaderno si scrive una riga alla volta**: i pulsanti compaiono solo quando la domanda ha finito di scriversi, e ogni messaggio aspetta che il precedente sia completo.
 - **Screen reader**: i messaggi vengono letti una volta sola, già completi, grazie alla zona invisibile `<div id="annunci">` in fondo al `<main>`. Non va tolta: se l'`aria-live` tornasse sulla chat, l'effetto macchina da scrivere farebbe rileggere ogni frase da capo a ogni carattere.
-- **Testi del catalogo**: titoli, autori, trame e note passano da `proteggi()` prima di finire nella pagina, quindi puoi scrivere tranquillamente `&`, `<` e `>` senza rompere niente.
+- **Testi del catalogo**: titoli, autori, trame e note passano da `proteggi()` prima di finire nella pagina. Puoi scrivere tranquillamente `&`, `<` e `>` senza rompere niente.
 - **Righe del quaderno**: l'allineamento legge `--u` da `style.css`, non una misura fissa nel JavaScript. Se cambi l'interlinea, cambiala solo lì.
+
+---
+
+## Usalo pure
+
+Consiglialibro è nato per essere passato di mano. **Prendilo, copialo, modificalo, riempilo con i tuoi libri e dallo ai tuoi studenti**: non serve chiedere il permesso e non c'è niente da pagare.
+
+Se lo trovi utile e ti va, lascia da qualche parte una riga su dove viene — nella finestra Info, o anche solo a voce a un collega. E se lo migliori, fammelo sapere: le idee buone conviene rimandarle indietro.
+
+**Ivan Campedelli** · [profcampedelli@gmail.com](mailto:profcampedelli@gmail.com) · [ivancampedelli.it](https://www.ivancampedelli.it)

@@ -424,6 +424,10 @@ button { font-family: inherit; }
   color: var(--inchiostro-tenue);
 }
 
+/* "📤 Condividi" in fondo al quiz. È un'AZIONE, non una risposta:
+   il verdino lo stacca dagli altri tre senza urlare. */
+.opzione-condividi { background: var(--postit-verde); }
+
 /* "L'ho già letto" dentro la scheda */
 .btn-gia-letto {
   margin-top: 0.9rem;
@@ -1022,14 +1026,72 @@ button { font-family: inherit; }
 .contatti a:hover { background: var(--evidenziatore); }
 .contatti svg { flex-shrink: 0; color: var(--rosso-penna); }
 
-/* Sostieni — pulsante Buy me a coffee nella finestra Info */
-.info-sostieni { margin: 0 0 var(--u); line-height: var(--u); }
-.bmc-contenitore {
+/* ---- Sostieni: prima il passaparola, poi il caffè ----
+   Le altezze restano multipli di --u, così anche questo blocco
+   cade sulle righe stampate del quaderno come il resto di Info. */
+.info-condividi-testo { margin: 0 0 var(--u); line-height: var(--u); }
+
+.condividi-contenitore,
+.caffe-contenitore {
   display: flex;
   justify-content: center;
   margin: 0 0 var(--u);
 }
-.bmc-contenitore img { height: auto; vertical-align: middle; }
+
+/* Stesso "pennarello" dei pulsanti di risposta: bordo a mano,
+   carattere scritto, leggera rotazione.
+   Forma condivisa dai due pulsanti della sezione Sostieni —
+   cambia solo il colore, più sotto. */
+.btn-condividi,
+.btn-caffe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: calc(var(--u) * 1.5);
+  padding: 0.3rem 1.2rem;
+  border: 2px solid var(--inchiostro);
+  border-radius: 15px 12px 16px 13px / 13px 16px 12px 15px;
+  color: var(--inchiostro);
+  font-family: var(--font-mano);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;   /* il caffè è un collegamento, non un pulsante */
+  cursor: pointer;
+  transform: rotate(-1deg);
+  box-shadow: var(--ombra-1);
+  transition: transform 0.15s var(--curva), background-color 0.2s var(--curva), box-shadow 0.2s var(--curva);
+}
+.btn-condividi:hover,
+.btn-caffe:hover {
+  transform: rotate(0) translateY(-1px);
+  box-shadow: var(--ombra-2);
+}
+.btn-condividi:active,
+.btn-caffe:active { transform: rotate(0); box-shadow: none; }
+
+/* Condividi: verde post-it, giallo evidenziatore al passaggio */
+.btn-condividi { background: var(--postit-verde); }
+.btn-condividi:hover { background: var(--evidenziatore); }
+
+/* Caffè: il giallo di prima (#ffe680, lo stesso del vecchio
+   pulsante Buy Me a Coffee), un tono più carico al passaggio. */
+.btn-caffe { background: var(--evidenziatore); }
+.btn-caffe:hover { background: #ffd54a; }
+
+/* Stato "Link copiato ✓" — vale per il pulsante di Info e per
+   quello in fondo al quiz (.opzione-condividi).
+   I due selettori sono scritti "doppi" apposta: .opzione ha una
+   rotazione applicata da :nth-child, che ha specificità più alta
+   e vincerebbe su una classe sola lasciando il pulsante storto. */
+.btn-condividi.condividi-fatto,
+.opzione.condividi-fatto {
+  background: var(--evidenziatore);
+  transform: rotate(0);
+}
+
+.info-sostieni { margin: 0 0 var(--u); line-height: var(--u); }
 
 /* ============================================================
    Footer
